@@ -8,11 +8,19 @@ lirc_init_settings(LIRCSettings* settings, const char* file_name)
   LIRC_SETTINGS_LINE line = 0;
   char buffer[LIRC_SETTINGS_BUFFER_SIZE];
 
+  /* Init settings */
+  settings->port = 0;
+  settings->server_name = NULL;
+  settings->motd = NULL;
+
   fp = fopen(file_name, "r");
 
   /* There was an error opening the settings file. */
   if (fp == NULL)
+  {
+    perror("LIRC could not read the settings file");
     return FALSE;
+  }
 
   /* Parse the settings file. */
   while (fgets(buffer, LIRC_SETTINGS_BUFFER_SIZE, fp) != NULL)
@@ -21,7 +29,15 @@ lirc_init_settings(LIRCSettings* settings, const char* file_name)
     {
     case (int)LIRC_SETTINGS_LINE_PORT:
     {
-      settings->port = atoi(buffer);
+      errno = 0;
+      settings->port = strtol(buffer, NULL, 10);
+
+      if (errno != 0)
+      {
+        perror("An error occured parsing the port number");
+        fclose(fp);
+        return FALSE;
+      }
       break;
     }
     case (int)LIRC_SETTINGS_LINE_NAME:
@@ -38,8 +54,7 @@ lirc_init_settings(LIRCSettings* settings, const char* file_name)
     {
       perror("Settings file has too many lines");
       fclose(fp);
-      exit(EXIT_FAILURE);
-      break;
+      return FALSE;
     }
     }
 

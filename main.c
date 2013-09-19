@@ -16,20 +16,19 @@ main(int argc, char *argv[])
   /* Populate the settings struct from the settings file. */
   if(!(lirc_init_settings(&lirc_settings, LIRC_SETTINGS_FILE)))
   {
-    perror("LIRC could not read the settings file");
+    lirc_settings_destroy(&lirc_settings);
     return EXIT_FAILURE;
   }
 
   /* Initialize the server and bind to the port specified
    * in the settings file. */
-  /*
   lirc_server_init(&lirc_server, &lirc_settings);
   if(!(lirc_server_bind(&lirc_server)))
   {
-    perror("LIRC could not bind to the port specified");
+    fprintf(stderr, "LIRC could not bind to the port specified.\n");
+    lirc_settings_destroy(&lirc_settings);
     return EXIT_FAILURE;
   }
-  */
 
   /* Enter the main loop of the server application */
 

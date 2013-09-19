@@ -12,4 +12,7 @@ typedef struct LIRCServer_struct
   int clients;
 } LIRCServer;
 
+void lirc_server_init(LIRCServer*, LIRCSettings*);
+BOOL lirc_server_bind(LIRCServer*);
+
 #endif
