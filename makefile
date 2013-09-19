@@ -1,8 +1,8 @@
 CC=gcc
 CFLAGS=-ansi -Wextra -pedantic
 
-all: main.o settings.o server.o util.o 
-	$(CC) main.o settings.o server.o util.o -o lirc 
+all: settings.o server.o main.o util.o 
+	$(CC) settings.o server.o main.o util.o -o lirc 
 
 util.o: util.c
 	$(CC) $(CFLAGS) -c util.c
@@ -20,6 +20,7 @@ indent:
 	astyle --style=ansi --indent=spaces=2 *.c *.h
 
 clean:
+	rm -f lirc
 	rm -f *.o
 	rm -f *.c.orig
 	rm -f *.h.orig

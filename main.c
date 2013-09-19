@@ -20,9 +20,14 @@ main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  /* Initialize the server and bind to the port specified
-   * in the settings file. */
-  lirc_server_init(&lirc_server, &lirc_settings);
+  /* Initialize the server and set it up to point to the
+   * port specified in the settings file. */
+  if(!(lirc_server_init(&lirc_server, &lirc_settings)))
+  {
+    perror("Creating the server socket failed");
+    lirc_settings_destroy(&lirc_settings);
+  }
+
   if(!(lirc_server_bind(&lirc_server)))
   {
     fprintf(stderr, "LIRC could not bind to the port specified.\n");

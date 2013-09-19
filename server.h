@@ -7,12 +7,16 @@
 
 typedef struct LIRCServer_struct
 {
+  int socket;
+  struct sockaddr_in socket_addr;
+
   LIRCSettings* settings;
+
   LIRCClientNode* head_client;
   int clients;
 } LIRCServer;
 
-void lirc_server_init(LIRCServer*, LIRCSettings*);
+BOOL lirc_server_init(LIRCServer*, LIRCSettings*);
 BOOL lirc_server_bind(LIRCServer*);
 
 #endif

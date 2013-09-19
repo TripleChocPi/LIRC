@@ -1,3 +1,5 @@
+#ifndef CLIENT_H
+#define CLIENT_H
 #include "lirc.h"
 
 typedef struct LIRCClientData_struct
@@ -12,3 +14,5 @@ typedef struct LIRCClientNode_struct
   struct LIRCClient_struct* prev_client;
   struct LIRCClient_struct* next_client;
 } LIRCClientNode;
+
+#endif
