@@ -18,5 +18,6 @@ typedef struct LIRCServer_struct
 
 BOOL lirc_server_init(LIRCServer*, LIRCSettings*);
 BOOL lirc_server_bind(LIRCServer*);
+void lirc_server_close(LIRCServer*);
 
 #endif

@@ -36,7 +36,9 @@ main(int argc, char *argv[])
   }
 
   /* Enter the main loop of the server application */
+  sleep(20);
 
+  lirc_server_close(&lirc_server);
   lirc_settings_destroy(&lirc_settings);
   return EXIT_SUCCESS;
 }

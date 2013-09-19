@@ -25,6 +25,15 @@ lirc_server_init(LIRCServer* server, LIRCSettings* settings)
 BOOL
 lirc_server_bind(LIRCServer* server)
 {
-  /* Not implemented */
-  return FALSE;
+  if (bind(server->socket, (const struct sockaddr *)&(server->socket_addr), 
+           sizeof (server->socket_addr)) < 0)
+    return FALSE;
+  else
+    return TRUE;
+}
+
+void
+lirc_server_close(LIRCServer* server)
+{
+  close(server->socket);
 }
