@@ -6,6 +6,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h> /* Sleep */
+#include <fcntl.h>
 
 #include <sys/socket.h>
 #include <sys/types.h>

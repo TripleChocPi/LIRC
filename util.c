@@ -9,7 +9,6 @@ safe_malloc (size_t size)
   void * ptr = malloc(size);
   if (ptr == NULL)
   {
-    errno = EXIT_FAILURE;
     perror("Attempt to alloc memory failed (malloc)");
     exit(EXIT_FAILURE);
   }
@@ -22,7 +21,6 @@ safe_realloc (void *old_mem, size_t new_size)
   void * ptr = realloc(old_mem, new_size);
   if (ptr == NULL)
   {
-    errno = EXIT_FAILURE;
     perror("Attempt to alloc memory failed (realloc)");
     exit(EXIT_FAILURE);
   }
@@ -36,7 +34,6 @@ safe_strdup (const char *str)
 
   if (str == NULL)
   {
-    errno = EXIT_FAILURE;
     perror("Attempt to duplicate string failed (strdup)");
     exit(EXIT_FAILURE);
   }
@@ -54,14 +51,28 @@ safe_strdup (const char *str)
   return ptr;
 }
 
-int
-cmp_int (const void *a, const void *b)
+/* Code provided by Mukund Sivaraman at URL:
+ * https://banu.com/blog/2/how-to-use-epol-a-complete-example-in-c/
+ */
+void
+make_socket_non_blocking (int socket)
 {
-  int a_val = *((int*)a);
-  int b_val = *((int*)b);
+  int flags, s;
+ 
+  /* Get the current flags of the socket */ 
+  flags = fcntl(socket, F_GETFL, 0);
+  if (flags == -1)
+  {
+    perror("FCNTL flag retreval error");
+    exit(EXIT_FAILURE);
+  }
 
-  if (a_val == b_val)
-    return 0;
-  else
-    return a_val - b_val;
+  /* Set the socket's flags to use non-blocking I/O */
+  flags |= O_NONBLOCK;
+  s = fcntl(socket, F_SETFL, flags);
+  if (s == -1)
+  {
+    perror("FCNTL set non-blocking error");
+    exit(EXIT_FAILURE);
+  }
 }

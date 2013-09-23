@@ -21,10 +21,12 @@ void *safe_realloc (void *old_mem, size_t new_size);
  */
 char *safe_strdup (const char *str);
 
-/* Compare two integers. Return 0 if equal, negative if a < b, positive
- * if a > b.
+/* Set a socket to perform I/O in a non-blocking mode.
+ * Code provided by Mukund Sivaraman at URL:
+ * https://banu.com/blog/2/how-to-use-epol-a-complete-example-in-c/
  */
-int cmp_int (const void *a, const void *b);
+void make_socket_non_blocking (int socket);
+
 
 #endif
 
