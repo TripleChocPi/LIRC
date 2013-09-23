@@ -6,12 +6,14 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h> /* Sleep */
-#include <fcntl.h>
 
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
+#include <fcntl.h>
+#include <sys/epoll.h>
 
 #include "util.h"
 

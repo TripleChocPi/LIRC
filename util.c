@@ -58,8 +58,8 @@ void
 make_socket_non_blocking (int socket)
 {
   int flags, s;
- 
-  /* Get the current flags of the socket */ 
+
+  /* Get the current flags of the socket */
   flags = fcntl(socket, F_GETFL, 0);
   if (flags == -1)
   {

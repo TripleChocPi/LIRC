@@ -4,21 +4,27 @@
 
 void display_welcome(void);
 void setup_server(LIRCSettings*, LIRCServer*);
+BOOL handle_inc_msgs(LIRCSettings*, LIRCServer*);
 
 int
 main(int argc, char *argv[])
 {
-  LIRCSettings lirc_settings;
   LIRCServer lirc_server;
+  LIRCSettings lirc_settings;
+  BOOL handle_messages = TRUE;
 
   /* Display a welcome message to the console. */
   display_welcome();
 
   /* Set up the LIRC server */
-  setup_server(&lirc_settings, &lirc_server);
+  lirc_server_init(&lirc_server, &lirc_settings);
 
   /* Enter the main loop of the server application */
-  sleep(20);
+  /* sleep(20); */
+  while (handle_messages)
+  {
+    handle_messages = handle_inc_msgs(&lirc_settings, &lirc_server);
+  }
 
   printf ("Server is shutting down.\n");
   lirc_server_close(&lirc_server);
@@ -37,45 +43,11 @@ display_welcome()
   printf("at %s\n\n", LIRC_GITHUB_ADDRESS);
 }
 
-void
-setup_server(LIRCSettings* lirc_settings, LIRCServer* lirc_server)
+
+BOOL
+handle_inc_msgs(LIRCSettings* lirc_settings, LIRCServer* lirc_server)
 {
-  /* Populate the settings struct from the settings file. */
-  if(!(lirc_init_settings(lirc_settings, LIRC_SETTINGS_FILE)))
-  {
-    lirc_settings_destroy(lirc_settings);
-    exit(EXIT_FAILURE);
-  }
 
-  printf("Settings loaded from %s.\n", LIRC_SETTINGS_FILE);
 
-  /* Initialize the server and set it up to point to the
-   * port specified in the settings file. */
-  if(!(lirc_server_init(lirc_server, lirc_settings)))
-  {
-    perror("Creating the server socket failed");
-    lirc_settings_destroy(lirc_settings);
-  }
-
-  printf("Server socket created...\n");
-
-  /* Ask the operating system if we can bind to the port specified */
-  if(!(lirc_server_bind(lirc_server)))
-  {
-    fprintf(stderr, "LIRC could not bind to the port specified.\n");
-    lirc_settings_destroy(lirc_settings);
-    exit(EXIT_FAILURE);
-  }
-
-  /* Start listening for incoming connections */
-  if(!(lirc_server_listen(lirc_server)))
-  {
-    fprintf(stderr, "LIRC could not listen on the socket specified.\n");
-    lirc_server_close(lirc_server);
-    lirc_settings_destroy(lirc_settings);
-    exit(EXIT_FAILURE);
-  }
-
-  printf("Server socket bound and listening on port %d.\n",
-         lirc_settings->port);
+  return TRUE;
 }
