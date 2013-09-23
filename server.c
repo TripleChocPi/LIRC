@@ -53,6 +53,84 @@ lirc_server_init(LIRCServer* lirc_server, LIRCSettings* lirc_settings)
 }
 
 void
+lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
+{
+  int i, event_count;
+  struct epoll_event events[LIRC_MAX_SERV_EVENTS];
+
+  /* Handle multiple events at once */
+  memset(events, '\0', sizeof (struct epoll_event) * LIRC_MAX_SERV_EVENTS);
+
+  /* Much of the code below is derived from
+   * https://banu.com/blog/2/how-to-use-epoll-a-complete-example-in-c/
+   */
+  event_count = epoll_wait(server->epoll, events, LIRC_MAX_SERV_EVENTS, -1);
+  for (i = 0; i < event_count; i++)
+  {
+    if ((
+          (events[i].events & EPOLLERR) ||
+          (events[i].events & EPOLLHUP) ||
+          (!(events[i].events & EPOLLIN))
+        )
+        && (events[i].data.fd != server->l_socket))
+    {
+      /* An error has occured on this socket, so we will close it. */
+      fprintf(stderr, "Error on a client's socket. Connection closed.");
+
+      /* TODO: Add a client disconnect event for all other clients. */
+      close(events[i].data.fd);
+      continue;
+    }
+    else if (events[i].data.fd == server->l_socket)
+    {
+      /* The listening socket has recieved a notification.
+       * There are one or more incoming connections */
+
+      while (TRUE)
+      {
+        struct epoll_event event;
+        struct sockaddr in_addr;
+        socklen_t in_len;
+        int socket;
+
+        in_len = sizeof (in_addr);
+        socket = accept(server->l_socket, &in_addr, &in_len);
+        if (socket == -1)
+        {
+          if ((errno != EAGAIN) && (errno != EWOULDBLOCK))
+            perror ("Error accepting connection");
+
+          /* All incoming connections have been processed. */
+          break;
+        }
+
+        /* Make all I/O with the new client non-blocking. */
+        make_socket_non_blocking(socket);
+
+        /* Register the new client with epoll */
+        event.data.fd = socket;
+        event.events = EPOLLIN | EPOLLET;
+
+        if ((epoll_ctl(server->epoll, EPOLL_CTL_ADD, socket, &event)) == -1)
+        {
+          perror("epoll_ctl add client error");
+          lirc_server_close(server);
+          lirc_settings_destroy(settings);
+          exit(EXIT_FAILURE);
+        }
+
+        /* TODO: Add client object to server linked list */
+        /* TODO: Add client to queue in update thread */
+      }
+    }
+    else
+    {
+      /* TODO: Handle message sent by a client */
+    }
+  }
+}
+
+void
 lirc_server_close(LIRCServer* server)
 {
   /* Close the socket used to accept connections */

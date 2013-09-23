@@ -4,7 +4,6 @@
 
 void display_welcome(void);
 void setup_server(LIRCSettings*, LIRCServer*);
-BOOL handle_inc_msgs(LIRCSettings*, LIRCServer*);
 
 int
 main(int argc, char *argv[])
@@ -20,10 +19,9 @@ main(int argc, char *argv[])
   lirc_server_init(&lirc_server, &lirc_settings);
 
   /* Enter the main loop of the server application */
-  /* sleep(20); */
-  while (handle_messages)
+  while (TRUE)
   {
-    handle_messages = handle_inc_msgs(&lirc_settings, &lirc_server);
+    lirc_server_main_loop(&lirc_server, &lirc_settings);
   }
 
   printf ("Server is shutting down.\n");
@@ -41,13 +39,4 @@ display_welcome()
   printf("Pull requests are welcome. For more information on LIRC's\n");
   printf("design philosophy and goals please visit our GitHub repo\n");
   printf("at %s\n\n", LIRC_GITHUB_ADDRESS);
-}
-
-
-BOOL
-handle_inc_msgs(LIRCSettings* lirc_settings, LIRCServer* lirc_server)
-{
-
-
-  return TRUE;
 }

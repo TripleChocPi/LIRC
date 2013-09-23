@@ -17,6 +17,7 @@ typedef struct LIRCServer_struct
 } LIRCServer;
 
 void lirc_server_init(LIRCServer*, LIRCSettings*);
+void lirc_server_main_loop(LIRCServer*, LIRCSettings*);
 void lirc_server_close(LIRCServer*);
 
 static BOOL lirc_server_socket_init(LIRCServer*, LIRCSettings*);

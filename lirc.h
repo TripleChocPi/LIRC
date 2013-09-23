@@ -17,6 +17,7 @@
 
 #include "util.h"
 
+#define LIRC_MAX_SERV_EVENTS 128
 #define LIRC_SETTINGS_FILE "./settings.cfg"
 #define LIRC_VERSION "0.01"
 #define LIRC_GITHUB_ADDRESS "https://github.com/TripleChocPi/LIRC/"
