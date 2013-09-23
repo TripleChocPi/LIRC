@@ -40,7 +40,7 @@ lirc_server_init(LIRCServer* lirc_server, LIRCSettings* lirc_settings)
   }
 
   /* Initialize epoll */
-  if(!(lirc_server_listen(lirc_server)))
+  if(!(lirc_server_init_epoll(lirc_server)))
   {
     fprintf(stderr, "LIRC could not initiate an epoll instance.\n");
     lirc_server_close(lirc_server);
@@ -85,7 +85,6 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
     {
       /* The listening socket has recieved a notification.
        * There are one or more incoming connections */
-
       while (TRUE)
       {
         struct epoll_event event;
@@ -119,13 +118,46 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
           exit(EXIT_FAILURE);
         }
 
+        printf("Client connected.\n");
+
         /* TODO: Add client object to server linked list */
         /* TODO: Add client to queue in update thread */
       }
     }
     else
     {
-      /* TODO: Handle message sent by a client */
+      BOOL disconnect = FALSE;
+      while (TRUE)
+      {
+        ssize_t count;
+        char buffer[MAX_IRC_MESSAGE_SIZE];
+
+        count = read(events[i].data.fd, buffer, sizeof(buffer));
+        if (count == -1)
+        {
+          /* EAGAIN is good, it means that we have read all the data. */
+          if (errno != EAGAIN)
+          {
+            perror("Read error");
+            disconnect = TRUE;
+          }
+          break;
+        }
+        else if (count == 0)
+        {
+          /* End of file, remote has closed the connection. */
+          disconnect = TRUE;
+          break;
+        }
+
+        printf("Message recieved: %s\n", buffer);
+      }
+
+      if (disconnect)
+      {
+        printf("Disconnected a client.\n");
+        close(events[i].data.fd);
+      }
     }
   }
 }
