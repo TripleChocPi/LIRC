@@ -131,7 +131,8 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
       {
         ssize_t count;
         char buffer[MAX_IRC_MESSAGE_SIZE];
-
+        
+        memset(buffer, '\0', sizeof(char) * MAX_IRC_MESSAGE_SIZE);
         count = read(events[i].data.fd, buffer, sizeof(buffer));
         if (count == -1)
         {
