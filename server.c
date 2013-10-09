@@ -83,7 +83,6 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
     }
     else if (events[i].data.fd == server->l_socket)
     {
-      int test = 0;
       /* The listening socket has recieved a notification.
        * There are one or more incoming connections */
       while (TRUE)
@@ -103,10 +102,6 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
           /* All incoming connections have been processed. */
           break;
         }
-
-        test = getnameinfo (&in_addr, in_len, hbuff, 255, sbuff, 255, 8);
-        if (test == 0)
-          printf("***Connected host=%s, port=%s\n", hbuff, sbuff);
 
         /* Make all I/O with the new client non-blocking. */
         make_socket_non_blocking(socket);
@@ -136,6 +131,7 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
       {
         ssize_t count;
         char buffer[MAX_IRC_MESSAGE_SIZE];
+        char temp[128];
         
         memset(buffer, '\0', sizeof(char) * MAX_IRC_MESSAGE_SIZE);
         count = read(events[i].data.fd, buffer, sizeof(buffer));
@@ -155,11 +151,11 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
           disconnect = TRUE;
           break;
         }
-
         printf("Message recieved: %s\n", buffer);
+        sprintf(temp, "NOTICE :*** Hello World%c%c", 0x0d, 0x0a);
         /* Send the client the message of the day */
-        send(events[i].data.fd, "NOTICE AUTH :***Hello World", 
-                    sizeof("NOTICE AUTH :***Hello World"), 0); 
+        send(events[i].data.fd, temp, 
+                    strlen(temp), 0); 
 
 
       }
