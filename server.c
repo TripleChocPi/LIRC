@@ -1,5 +1,11 @@
 #include "server.h"
 
+static BOOL lirc_server_socket_init(LIRCServer* server, 
+                                    LIRCSettings* settings);
+static BOOL lirc_server_bind(LIRCServer* server);
+static BOOL lirc_server_listen(LIRCServer* server);
+static BOOL lirc_server_init_epoll(LIRCServer* server);
+
 void
 lirc_server_init(LIRCServer* lirc_server, LIRCSettings* lirc_settings)
 {
@@ -119,9 +125,7 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
         }
 
         printf("Client connected.\n");
-
-                /* TODO: Add client object to server linked list */
-        /* TODO: Add client to queue in update thread */
+        /* TODO: Add client object to server linked list */
       }
     }
     else
@@ -131,8 +135,10 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
       {
         ssize_t count;
         char buffer[MAX_IRC_MESSAGE_SIZE];
-        char temp[128];
-        
+        char temp[MAX_IRC_MESSAGE_SIZE];
+        char* saveptr;
+        char* command;
+
         memset(buffer, '\0', sizeof(char) * MAX_IRC_MESSAGE_SIZE);
         count = read(events[i].data.fd, buffer, sizeof(buffer));
         if (count == -1)
@@ -151,13 +157,22 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
           disconnect = TRUE;
           break;
         }
-        printf("Message recieved: %s\n", buffer);
-        sprintf(temp, "NOTICE :*** Hello World%c%c", 0x0d, 0x0a);
+
+        /* Need to use reentrant version of strtok because
+         * it uses a static buffer and is therefore not thread-safe. */
+        command = strtok_r(buffer, "\r\n", &saveptr); 
+
+        while (command)
+        {
+          lirc_client_parse(server, settings, events[i].data.fd, command);
+          command = strtok_r(NULL, "\r\n", &saveptr); 
+        }
+
+        sprintf(temp, "NOTICE :*** %s\r\n", settings->server_name);
         /* Send the client the message of the day */
-        send(events[i].data.fd, temp, 
-                    strlen(temp), 0); 
+        send(events[i].data.fd, temp, strlen(temp), 0);
 
-
+        printf("Message recieved: %s\n", buffer);
       }
 
       if (disconnect)

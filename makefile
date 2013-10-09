@@ -1,8 +1,8 @@
 CC=gcc
-CFLAGS=-ansi -Wextra -pedantic
+CFLAGS=-ansi -Wall -pedantic
 
-all: settings.o server.o main.o util.o 
-	$(CC) settings.o server.o main.o util.o -o lirc 
+all: settings.o server.o main.o util.o client.o 
+	$(CC) settings.o server.o main.o util.o client.o -o lirc 
 
 util.o: util.c
 	$(CC) $(CFLAGS) -c util.c
@@ -15,6 +15,9 @@ settings.o: settings.c
 
 server.o: server.c
 	$(CC) $(CFLAGS) -c server.c
+
+client.o: client.c
+	$(CC) $(CFLAGS) -c client.c 
 
 indent:
 	astyle --style=ansi --indent=spaces=2 *.c *.h
