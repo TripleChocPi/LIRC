@@ -13,9 +13,8 @@ typedef struct LIRCClientData_struct
   char *nick, *user;
 } LIRCClientData;
 
-void lirc_client_meta_init(struct LIRCServer_struct* server);
-void lirc_client_connect(struct LIRCServer_struct*, int socket);
-void lirc_client_parse(struct LIRCServer_struct*, LIRCSettings*, 
+void lirc_client_connect(struct LIRCServer_struct*, int socket, char* nick);
+void lirc_client_parse(struct LIRCServer_struct*, LIRCSettings*,
                        int socket, char* command);
 void lirc_client_disconnect(struct LIRCServer_struct*, int socket);
 

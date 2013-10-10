@@ -1,6 +1,7 @@
 #ifndef LIRC_H
 #define LIRC_H
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +17,9 @@
 #include <sys/epoll.h>
 
 #include "util.h"
+#include "list.h"
 
+#define MAX_IRC_CMD_LEN 10
 #define LIRC_MAX_SERV_EVENTS 128
 #define MAX_IRC_MESSAGE_SIZE 512
 #define LIRC_SETTINGS_FILE "./settings.cfg"

@@ -3,6 +3,7 @@
 
 #include "lirc.h"
 #include "settings.h"
+#include "list.h"
 
 /* Pre-declare structs */
 struct LIRCClientData_struct;
@@ -14,7 +15,7 @@ typedef struct LIRCServer_struct
   int l_socket;
   struct sockaddr_in l_socket_addr;
 
-  struct LIRCClientData_struct* head_client;
+  dlist_t* client_list;
   int clients;
 } LIRCServer;
 

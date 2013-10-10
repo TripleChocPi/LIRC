@@ -1,7 +1,7 @@
 #include "server.h"
 #include "client.h"
 
-static BOOL lirc_server_socket_init(LIRCServer* server, 
+static BOOL lirc_server_socket_init(LIRCServer* server,
                                     LIRCSettings* settings);
 static BOOL lirc_server_bind(LIRCServer* server);
 static BOOL lirc_server_listen(LIRCServer* server);
@@ -54,6 +54,10 @@ lirc_server_init(LIRCServer* lirc_server, LIRCSettings* lirc_settings)
     lirc_settings_destroy(lirc_settings);
     exit(EXIT_FAILURE);
   }
+
+  /* Set up the client list to be added and removed from */
+  lirc_server->clients = 0;
+  lirc_server->client_list = make_empty_list(); 
 
   printf("Server socket bound and listening on port %d.\n",
          lirc_settings->port);
@@ -161,13 +165,13 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
 
         /* Need to use reentrant version of strtok because
          * it uses a static buffer and is therefore not thread-safe. */
-        command = strtok_r(buffer, "\r\n", &saveptr); 
+        command = strtok_r(buffer, "\r\n", &saveptr);
 
         while (command)
         {
           printf("Message recieved: %s\n", command);
           lirc_client_parse(server, settings, events[i].data.fd, command);
-          command = strtok_r(NULL, "\r\n", &saveptr); 
+          command = strtok_r(NULL, "\r\n", &saveptr);
         }
 
         sprintf(temp, "NOTICE :*** %s\r\n", settings->server_name);
@@ -195,10 +199,6 @@ lirc_server_close(LIRCServer* server)
 static BOOL
 lirc_server_socket_init(LIRCServer* server, LIRCSettings* settings)
 {
-  /* Initialize values */
-  server->head_client = NULL;
-  server->clients = 0;
-
   /* Set up the server socket */
   if ((server->l_socket = socket(PF_INET, SOCK_STREAM, 0)) < 0)
     return FALSE;
