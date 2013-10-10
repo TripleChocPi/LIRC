@@ -11,6 +11,9 @@ typedef struct LIRCClientData_struct
 {
   int socket;
   char *nick, *user;
+
+  /* Weak pointers to joined channels */
+  dlist_t* channel_list;
 } LIRCClientData;
 
 void lirc_client_connect(struct LIRCServer_struct*,

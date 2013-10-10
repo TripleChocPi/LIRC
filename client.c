@@ -12,6 +12,7 @@ static LIRCClientData* lirc_client_new_metadata()
   client->socket = 0;
   client->nick = NULL;
   client->user = "anon";
+  client->channel_list = make_empty_list();
 
   return client;
 }
@@ -27,15 +28,34 @@ void lirc_client_connect(struct LIRCServer_struct* server,
 
   insert_at_front(server->client_list, client, sizeof(client));
 
+  /* Send a ping because irssi does a handshake potentially */
+  
+
   /* Send client a welcome and motd */
 
   /* Send the client the server name */
-  sprintf(temp, "NOTICE : Welcome to %s\r\n", settings->server_name);
+  sprintf(temp, ":lirc.org 001 %s :Welcome to %s\r\n", nick, 
+          settings->server_name);
   send(socket, temp, strlen(temp), 0);
 
   /* Send the MOTD */
-  sprintf(temp, "NOTICE : %s\r\n", settings->motd);
+  sprintf(temp, ":lirc.org 372 %s :%s\r\n", nick, settings->motd);
   send(socket, temp, strlen(temp), 0);
+
+  /* End of MOTD */
+  sprintf(temp, ":lirc.org 376 %s :%s\r\n", nick, "End of /MOTD command.");
+  send(socket, temp, strlen(temp), 0);
+
+  /* Send a PING out */
+  sprintf(temp, "PING :%d\r\n", (int)time(NULL));
+  send(socket, temp, strlen(temp), 0);
+
+  /* Set the mode of the user */
+  sprintf(temp, ":lirc.org 221 %s +i\r\n", nick);
+  send(socket, temp, strlen(temp), 0);
+  
+  sprintf(temp, ":%s!~%s@anon.com MODE %s +i\r\n", client->nick, 
+          client->user, nick);
 }
 
 void lirc_client_setnick(struct LIRCServer_struct* server, int socket,
@@ -47,6 +67,7 @@ void lirc_client_setnick(struct LIRCServer_struct* server, int socket,
 
   if (client != NULL && client->nick != NULL)
   {
+    dlnode_t* channel_node;
     char temp[MAX_IRC_MESSAGE_SIZE];
 
     sprintf(temp, ":%s!~%s@anon.com NICK :", client->nick, client->user);
@@ -60,6 +81,30 @@ void lirc_client_setnick(struct LIRCServer_struct* server, int socket,
      * everything went ok. */
     sprintf(temp + strlen(temp), "%s\r\n", client->nick);
     send(socket, temp, strlen(temp), 0);
+
+    /* Let every client know of every joined channel that 
+     * the nickname has been changed. This code doesn't check for
+     * two or more clients in two or more rooms and couple result
+     * in duplicates. */
+    channel_node = client->channel_list->head;
+
+    while (channel_node != NULL)
+    {
+      struct LIRCChannelData_struct* c = 
+        (struct LIRCChannelData_struct*)channel_node->data;
+      dlnode_t* client_node = c->client_list->head;
+
+      while (client_node != NULL)
+      {
+        LIRCClientData* c_data = 
+          (LIRCClientData*)client_node->data;
+
+        send(c_data->socket, temp, strlen(temp), 0);
+        client_node = client_node->next;
+      }
+
+      channel_node = channel_node->next;
+    } 
   }
 }
 
@@ -117,6 +162,15 @@ void lirc_client_parse(struct LIRCServer_struct* server,
     lirc_channel_who(server, client, command_args);
     return;
   }
+
+  if (!strcmp(command_string, "PING"))
+  {
+    char temp[MAX_IRC_MESSAGE_SIZE];
+    sprintf(temp, ":PONG %s\r\n", command_args);
+    send(socket, temp, strlen(temp), 0);    
+    return;
+  }
+
 
   if (!strcmp(command_string, "QUIT"))
   {
