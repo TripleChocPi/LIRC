@@ -116,7 +116,7 @@ void lirc_client_parse(struct LIRCServer_struct* server,
   BOOL args = FALSE;
   char* command_string = NULL;
   char* command_args = NULL;
-
+  
   c_str = strtok_r(command, " ", &saveptr);
   /* Command has multiple parameters */
   if (c_str)
@@ -166,11 +166,10 @@ void lirc_client_parse(struct LIRCServer_struct* server,
   if (!strcmp(command_string, "PING"))
   {
     char temp[MAX_IRC_MESSAGE_SIZE];
-    sprintf(temp, ":PONG %s\r\n", command_args);
+    sprintf(temp, ":lirc.org PONG lirc.org :%s\r\n", command_args);
     send(socket, temp, strlen(temp), 0);    
     return;
   }
-
 
   if (!strcmp(command_string, "QUIT"))
   {
