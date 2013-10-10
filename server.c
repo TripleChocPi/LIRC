@@ -57,7 +57,7 @@ lirc_server_init(LIRCServer* lirc_server, LIRCSettings* lirc_settings)
 
   /* Set up the client list to be added and removed from */
   lirc_server->clients = 0;
-  lirc_server->client_list = make_empty_list(); 
+  lirc_server->client_list = make_empty_list();
 
   printf("Server socket bound and listening on port %d.\n",
          lirc_settings->port);
@@ -140,7 +140,6 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
       {
         ssize_t count;
         char buffer[MAX_IRC_MESSAGE_SIZE];
-        char temp[MAX_IRC_MESSAGE_SIZE];
         char* saveptr;
         char* command;
 
@@ -173,11 +172,6 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
           lirc_client_parse(server, settings, events[i].data.fd, command);
           command = strtok_r(NULL, "\r\n", &saveptr);
         }
-
-        sprintf(temp, "NOTICE :*** %s\r\n", settings->server_name);
-        /* Send the client the message of the day */
-        send(events[i].data.fd, temp, strlen(temp), 0);
-
       }
 
       if (disconnect)

@@ -10,19 +10,55 @@ static LIRCClientData* lirc_client_new_metadata()
   /* Initialize default values for the new client */
   client->socket = 0;
   client->nick = NULL;
-  client->user = NULL;
+  client->user = "anon";
 
   return client;
 }
 
-void lirc_client_connect(struct LIRCServer_struct* server, int socket,
+void lirc_client_connect(struct LIRCServer_struct* server,
+                         LIRCSettings* settings, int socket,
                          char* nick)
 {
+  char temp[MAX_IRC_MESSAGE_SIZE];
   LIRCClientData* client = lirc_client_new_metadata();
   client->socket = socket;
   client->nick = safe_strdup(nick);
 
-  insert_at_front (server->client_list, client, sizeof(client)); 
+  insert_at_front (server->client_list, client, sizeof(client));
+
+  /* Send client a welcome and motd */
+
+  /* Send the client the server name */
+  sprintf(temp, "NOTICE : Welcome to %s\r\n", settings->server_name);
+  send(socket, temp, strlen(temp), 0);
+
+  sprintf(temp, "NOTICE : %s\r\n", settings->motd);
+  send(socket, temp, strlen(temp), 0);
+}
+
+void lirc_client_setnick(struct LIRCServer_struct* server, int socket,
+                         char* nick)
+{
+  LIRCClientData* client =
+    (LIRCClientData*)find_element(server->client_list, &socket,
+                                  lirc_client_cmp);
+
+  if (client != NULL && client->nick != NULL)
+  {
+    char temp[MAX_IRC_MESSAGE_SIZE];
+
+    sprintf(temp, ":%s!~%s@anon.com NICK :", client->nick, client->user);
+
+    printf("Nickname changed from %s ", client->nick);
+    free(client->nick);
+    client->nick = safe_strdup(nick);
+    printf("to %s.\n", client->nick);
+
+    /* Send an acknowledgement response to the client to say
+     * everything went ok. */
+    sprintf(temp + strlen(temp), "%s\r\n", client->nick);
+    send(socket, temp, strlen(temp), 0);
+  }
 }
 
 void lirc_client_parse(struct LIRCServer_struct* server,
@@ -53,11 +89,14 @@ void lirc_client_parse(struct LIRCServer_struct* server,
 
   if (!strcmp(command_string, "NICK"))
   {
-    lirc_client_connect(server, socket, command_args);
+    if (find_element(server->client_list, &socket, lirc_client_cmp) == NULL)
+      lirc_client_connect(server, settings, socket, command_args);
+    else
+      lirc_client_setnick(server, socket, command_args);
     return;
   }
 
-  if (!strcmp(command_string, "QUIT")) 
+  if (!strcmp(command_string, "QUIT"))
   {
     lirc_client_disconnect(server, socket);
     return;
@@ -73,7 +112,7 @@ void lirc_client_parse(struct LIRCServer_struct* server,
 void lirc_client_disconnect(struct LIRCServer_struct* server, int socket)
 {
   close(socket);
-  remove_element(server->client_list, &socket, lirc_client_cmp); 
+  remove_element(server->client_list, &socket, lirc_client_cmp);
 }
 
 static int lirc_client_cmp(const void *client, const void *socket)
