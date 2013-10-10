@@ -4,7 +4,8 @@
 #include "lirc.h"
 #include "settings.h"
 
-typedef struct LIRCServer_struct LIRCServer;
+/* Pre-declare structs */
+struct LIRCServer_struct;
 
 typedef struct LIRCClientData_struct
 {
@@ -12,10 +13,11 @@ typedef struct LIRCClientData_struct
   char *nick, *user;
 } LIRCClientData;
 
-void lirc_client_meta_init(LIRCServer* server);
-void lirc_client_connect(LIRCServer*, int socket);
-void lirc_client_parse(LIRCServer*, LIRCSettings*, int socket, char* command);
-void lirc_client_disconnect(LIRCServer*, int socket);
+void lirc_client_meta_init(struct LIRCServer_struct* server);
+void lirc_client_connect(struct LIRCServer_struct*, int socket);
+void lirc_client_parse(struct LIRCServer_struct*, LIRCSettings*, 
+                       int socket, char* command);
+void lirc_client_disconnect(struct LIRCServer_struct*, int socket);
 
-LIRCClientData* lirc_client_search(LIRCServer*, int socket);
+LIRCClientData* lirc_client_search(struct LIRCServer_struct*, int socket);
 #endif

@@ -1,4 +1,5 @@
 #include "server.h"
+#include "client.h"
 
 static BOOL lirc_server_socket_init(LIRCServer* server, 
                                     LIRCSettings* settings);
@@ -164,6 +165,7 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
 
         while (command)
         {
+          printf("Message recieved: %s\n", command);
           lirc_client_parse(server, settings, events[i].data.fd, command);
           command = strtok_r(NULL, "\r\n", &saveptr); 
         }
@@ -172,7 +174,6 @@ lirc_server_main_loop(LIRCServer* server, LIRCSettings* settings)
         /* Send the client the message of the day */
         send(events[i].data.fd, temp, strlen(temp), 0);
 
-        printf("Message recieved: %s\n", buffer);
       }
 
       if (disconnect)

@@ -10,7 +10,6 @@ main(int argc, char *argv[])
 {
   LIRCServer lirc_server;
   LIRCSettings lirc_settings;
-  BOOL handle_messages = TRUE;
 
   /* Display a welcome message to the console. */
   display_welcome();

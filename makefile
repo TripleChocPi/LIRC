@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-ansi -Wall -pedantic
+CFLAGS=-Wall -pedantic
 
 all: settings.o server.o main.o util.o client.o 
 	$(CC) settings.o server.o main.o util.o client.o -o lirc 
