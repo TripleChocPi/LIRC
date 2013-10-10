@@ -1,5 +1,6 @@
 #include "client.h"
 #include "server.h"
+#include "channel.h"
 
 static int lirc_client_cmp(const void *client, const void *socket);
 
@@ -24,7 +25,7 @@ void lirc_client_connect(struct LIRCServer_struct* server,
   client->socket = socket;
   client->nick = safe_strdup(nick);
 
-  insert_at_front (server->client_list, client, sizeof(client));
+  insert_at_front(server->client_list, client, sizeof(client));
 
   /* Send client a welcome and motd */
 
@@ -32,6 +33,7 @@ void lirc_client_connect(struct LIRCServer_struct* server,
   sprintf(temp, "NOTICE : Welcome to %s\r\n", settings->server_name);
   send(socket, temp, strlen(temp), 0);
 
+  /* Send the MOTD */
   sprintf(temp, "NOTICE : %s\r\n", settings->motd);
   send(socket, temp, strlen(temp), 0);
 }
@@ -93,6 +95,26 @@ void lirc_client_parse(struct LIRCServer_struct* server,
       lirc_client_connect(server, settings, socket, command_args);
     else
       lirc_client_setnick(server, socket, command_args);
+    return;
+  }
+
+  if (!strcmp(command_string, "JOIN"))
+  {
+    struct LIRCClientData_struct* client = 
+      (struct LIRCClientData_struct*)find_element(server->client_list, 
+                                                  &socket,
+                                                  lirc_client_cmp);
+    lirc_channel_join(server, client, command_args);
+    return;
+  }
+
+  if (!strcmp(command_string, "WHO"))
+  {
+    struct LIRCClientData_struct* client = 
+      (struct LIRCClientData_struct*)find_element(server->client_list, 
+                                                  &socket,
+                                                  lirc_client_cmp);
+    lirc_channel_who(server, client, command_args);
     return;
   }
 

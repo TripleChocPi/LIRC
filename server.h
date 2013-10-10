@@ -16,7 +16,7 @@ typedef struct LIRCServer_struct
   struct sockaddr_in l_socket_addr;
 
   dlist_t* client_list;
-  int clients;
+  dlist_t* channel_list;
 } LIRCServer;
 
 void lirc_server_init(LIRCServer*, LIRCSettings*);

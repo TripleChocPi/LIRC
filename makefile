@@ -1,8 +1,9 @@
 CC=gcc
 CFLAGS=-Wall -pedantic
 
-all: settings.o list.o server.o main.o util.o client.o 
-	$(CC) settings.o list.o server.o main.o util.o client.o -o lirc 
+all: settings.o list.o server.o main.o util.o client.o channel.o 
+	$(CC) settings.o list.o server.o main.o util.o client.o \
+	channel.o -o lirc 
 
 util.o: util.c
 	$(CC) $(CFLAGS) -c util.c
@@ -18,6 +19,9 @@ settings.o: settings.c
 
 server.o: server.c
 	$(CC) $(CFLAGS) -c server.c
+
+channel.o: channel.c
+	$(CC) $(CFLAGS) -c channel.c
 
 client.o: client.c
 	$(CC) $(CFLAGS) -c client.c 

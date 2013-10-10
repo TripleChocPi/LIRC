@@ -56,8 +56,10 @@ lirc_server_init(LIRCServer* lirc_server, LIRCSettings* lirc_settings)
   }
 
   /* Set up the client list to be added and removed from */
-  lirc_server->clients = 0;
   lirc_server->client_list = make_empty_list();
+ 
+  /* Same applies to channels */
+  lirc_server->channel_list = make_empty_list();
 
   printf("Server socket bound and listening on port %d.\n",
          lirc_settings->port);
