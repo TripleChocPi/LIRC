@@ -28,11 +28,6 @@ void lirc_client_connect(struct LIRCServer_struct* server,
 
   insert_at_front(server->client_list, client, sizeof(client));
 
-  /* Send a ping because irssi does a handshake potentially */
-  
-
-  /* Send client a welcome and motd */
-
   /* Send the client the server name */
   sprintf(temp, ":lirc.org 001 %s :Welcome to %s\r\n", nick, 
           settings->server_name);
@@ -116,7 +111,7 @@ void lirc_client_parse(struct LIRCServer_struct* server,
   BOOL args = FALSE;
   char* command_string = NULL;
   char* command_args = NULL;
-  
+   
   c_str = strtok_r(command, " ", &saveptr);
   /* Command has multiple parameters */
   if (c_str)
@@ -124,57 +119,85 @@ void lirc_client_parse(struct LIRCServer_struct* server,
     args = TRUE;
     command_string = safe_strdup(c_str);
     c_str = strtok_r(NULL, " ", &saveptr);
-    command_args = safe_strdup(c_str);
+    if (c_str != NULL)
+      command_args = safe_strdup(c_str);
+    
     printf("Command string = %s\n", command_string);
-    printf("Command args = %s\n", command_args);
+    
+    if (c_str != NULL)
+      printf("Command args = %s\n", command_args);
   }
   else
   {
     /* Command doesn't have arguments. */
     command_string = command;
   }
+  
+  if (!strcmp(command_string, "PRIVMSG"))
+  {
+    char message[MAX_IRC_MESSAGE_SIZE]; 
+    char* message_tmp; 
+    struct LIRCClientData_struct* client = 
+      (struct LIRCClientData_struct*)find_element(server->client_list, 
+                                                  &socket,
+                                                  lirc_client_cmp);
 
-  if (!strcmp(command_string, "NICK"))
+    /* Fill message with zeros */
+    memset(message, '\0', MAX_IRC_MESSAGE_SIZE);
+    
+    /* Get the remaining message */
+    while ((message_tmp = strtok_r(NULL, " ", &saveptr)) != NULL)
+    {
+      strcat(message, message_tmp);
+      strcat(message, " ");
+    }
+
+    lirc_channel_message(server, client, command_args, message);
+  }
+  else if (!strcmp(command_string, "NICK"))
   {
     if (find_element(server->client_list, &socket, lirc_client_cmp) == NULL)
       lirc_client_connect(server, settings, socket, command_args);
     else
       lirc_client_setnick(server, socket, command_args);
-    return;
   }
-
-  if (!strcmp(command_string, "JOIN"))
+  else if (!strcmp(command_string, "JOIN"))
   {
     struct LIRCClientData_struct* client = 
       (struct LIRCClientData_struct*)find_element(server->client_list, 
                                                   &socket,
                                                   lirc_client_cmp);
     lirc_channel_join(server, client, command_args);
-    return;
   }
-
-  if (!strcmp(command_string, "WHO"))
+  else if (!strcmp(command_string, "PART"))
+  {
+    struct LIRCClientData_struct* client = 
+      (struct LIRCClientData_struct*)find_element(server->client_list, 
+                                                  &socket,
+                                                  lirc_client_cmp);
+    lirc_channel_leave(server, client, command_args);
+  }
+  else if (!strcmp(command_string, "WHO"))
   {
     struct LIRCClientData_struct* client = 
       (struct LIRCClientData_struct*)find_element(server->client_list, 
                                                   &socket,
                                                   lirc_client_cmp);
     lirc_channel_who(server, client, command_args);
-    return;
   }
-
-  if (!strcmp(command_string, "PING"))
+  else if (!strcmp(command_string, "PING"))
   {
     char temp[MAX_IRC_MESSAGE_SIZE];
     sprintf(temp, ":lirc.org PONG lirc.org :%s\r\n", command_args);
     send(socket, temp, strlen(temp), 0);    
-    return;
   }
-
-  if (!strcmp(command_string, "QUIT"))
+  else if (!strcmp(command_string, "QUIT"))
   {
     lirc_client_disconnect(server, socket);
-    return;
+  }
+  else
+  {
+    /* Send invalid command notice here */ 
   }
 
   if (args)

@@ -62,8 +62,8 @@ void lirc_channel_join(struct LIRCServer_struct* server,
 
   while (client_node != NULL)
   {
-    LIRCClientData_struct *client_node_data = 
-      (LIRCClientData_struct *)client_node->data;
+    struct LIRCClientData_struct *client_node_data = 
+      (struct LIRCClientData_struct *)client_node->data;
 
     send(client_node_data->socket, temp, strlen(temp), 0); 
     client_node = client_node->next;
@@ -93,14 +93,13 @@ void lirc_channel_who(struct LIRCServer_struct* server,
     struct LIRCClientData_struct* chan_client = 
       ((struct LIRCClientData_struct*)(client_node->data));
 
-    sprintf(temp + size, "%s ", chan_client->nick);
-    size += strlen(chan_client->nick + 1);
-
+    strcat(temp, chan_client->nick);
+    strcat(temp, " ");
     client_node = client_node->next;
   }
 
   /* Minus 1 to remove the space at the end of the list */
-  sprintf(temp + size - 1, "\r\n");
+  strcat(temp, "\r\n");
   send(client->socket, temp, strlen(temp), 0);
  
   /* Tell the IRC client that we're done listing client names */
@@ -109,6 +108,41 @@ void lirc_channel_who(struct LIRCServer_struct* server,
           client->nick, channel);
 
   send(client->socket, temp, strlen(temp), 0);
+}
+
+void lirc_channel_message(struct LIRCServer_struct* server,
+                        struct LIRCClientData_struct* client,
+                        char *channel, char *message)
+{
+  char temp[MAX_IRC_MESSAGE_SIZE];
+  dlnode_t* client_node;
+  LIRCChannelData* c = 
+    (LIRCChannelData*)find_element(server->channel_list,
+                                   channel, lirc_channel_cmp);
+  if (c == NULL)
+  {
+    return;
+  }
+  /* Send a message to all connected clients inside the channel */
+  client_node = c->client_list->head;
+
+  sprintf(temp, ":%s!~%s@anon.com PRIVMSG %s %s\r\n", 
+          client->nick, client->user, channel, message);
+
+  while (client_node != NULL)
+  {
+    struct LIRCClientData_struct *client_node_data = 
+      (struct LIRCClientData_struct *)client_node->data;
+
+    if (client_node_data == client)
+    {
+      client_node = client_node->next;
+      continue;
+    }
+
+    send(client_node_data->socket, temp, strlen(temp), 0); 
+    client_node = client_node->next;
+  }
 }
 
 void lirc_channel_leave(struct LIRCServer_struct* server,
@@ -139,11 +173,14 @@ void lirc_channel_leave(struct LIRCServer_struct* server,
 
   while (client_node != NULL)
   {
-    LIRCClientData_struct *client_node_data = 
-      (LIRCClientData_struct *)client_node->data;
+    struct LIRCClientData_struct *client_node_data = 
+      (struct LIRCClientData_struct *)client_node->data;
 
     send(client_node_data->socket, temp, strlen(temp), 0); 
     client_node = client_node->next;
-  } 
+  }
+
+  /* Finally let the client know the part was successful */
+  send(client->socket, temp, strlen(temp), 0); 
 }
 
