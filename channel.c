@@ -23,11 +23,17 @@ static int lirc_channel_cmp(const void *channel, const void *c_str)
   return strcmp(chan->name, c);
 }
 
+static int lirc_client_cmp(const void *client1, const void *client2)
+{
+  return (client1 == client2) ? 0 : -1;
+}
+
 void lirc_channel_join(struct LIRCServer_struct* server,
                        struct LIRCClientData_struct* client,
                        char *channel)
 {
   char temp[MAX_IRC_MESSAGE_SIZE];
+  dlnode_t* client_node;
   LIRCChannelData* c = 
     (LIRCChannelData*)find_element(server->channel_list,
                                    channel, lirc_channel_cmp);
@@ -47,10 +53,21 @@ void lirc_channel_join(struct LIRCServer_struct* server,
   /* Add a weak reference to the joined channels list of the client */
   insert_at_front(client->channel_list, c, sizeof(c));
 
-  /* Send the response message indicating the join was successful */
+  /* Send a response message to all connected clients inside the 
+   * channel indicating that a join was made */
+  client_node = c->client_list->head;
+
   sprintf(temp, ":%s!~%s@anon.com JOIN %s\r\n", client->nick, client->user, 
           channel);
-  send(client->socket, temp, strlen(temp), 0); 
+
+  while (client_node != NULL)
+  {
+    LIRCClientData_struct *client_node_data = 
+      (LIRCClientData_struct *)client_node->data;
+
+    send(client_node_data->socket, temp, strlen(temp), 0); 
+    client_node = client_node->next;
+  } 
 }
 
 void lirc_channel_who(struct LIRCServer_struct* server,
@@ -98,6 +115,35 @@ void lirc_channel_leave(struct LIRCServer_struct* server,
                         struct LIRCClientData_struct* client,
                         char *channel)
 {
+  char temp[MAX_IRC_MESSAGE_SIZE];
+  dlnode_t* client_node;
+  LIRCChannelData* c = 
+    (LIRCChannelData*)find_element(server->channel_list,
+                                   channel, lirc_channel_cmp);
+  if (c == NULL)
+  {
+    return;
+  }
+  /* Remove weak reference to the joined channels list of the client */
+  remove_element(client->channel_list, c, lirc_channel_cmp);
 
+  /* Remove this client from the list */
+  remove_element(c->client_list, client, lirc_client_cmp);
+
+  /* Send a response message to all remaining clients inside the 
+   * channel indicating that a part was made */
+  client_node = c->client_list->head;
+
+  sprintf(temp, ":%s!~%s@anon.com PART %s\r\n", client->nick, client->user, 
+          channel);
+
+  while (client_node != NULL)
+  {
+    LIRCClientData_struct *client_node_data = 
+      (LIRCClientData_struct *)client_node->data;
+
+    send(client_node_data->socket, temp, strlen(temp), 0); 
+    client_node = client_node->next;
+  } 
 }
 
